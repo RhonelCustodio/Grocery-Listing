@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sis's Grocery List</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Grocery Request</h1>
+        
+        <div class="input-group">
+            <input type="text" id="itemInput" placeholder="Enter item (e.g. Milk 1L)">
+            <button onclick="addItem()">Add to List</button>
+        </div>
+
+        <hr>
+
+        <h2>Current List</h2>
+        <ul id="groceryList">
+            </ul>
+        <button class="clear-btn" onclick="clearList()">Clear All Items</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
