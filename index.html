@@ -60,7 +60,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <script>
-        const firebaseConfig = { /* PASTE YOUR CONFIG HERE */ };
+        const firebaseConfig = {
+  apiKey: "AIzaSyDicj2vqrIlEGTX_SHT3YDKBw02CsFpKgI",
+  authDomain: "grocery-listing-2ad38.firebaseapp.com",
+  projectId: "grocery-listing-2ad38",
+  storageBucket: "grocery-listing-2ad38.firebasestorage.app",
+  messagingSenderId: "499057133312",
+  appId: "1:499057133312:web:2cfd3e3dc8c417170795e5"
+};
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -121,124 +128,6 @@
         }
 
         function deleteItem(id) { db.collection('groceries').doc(id).delete(); }
-    </script>
-</body>
-</html>                        <select id="unitInput" style="width:100%">
-                            <option value="pcs">pcs</option>
-                            <option value="kg">kg</option>
-                            <option value="pack">pack</option>
-                            <option value="bottle">bottle</option>
-                        </select>
-                    </div>
-                    <button id="addBtn" onclick="addItem()" style="background:var(--primary); color:white; border:none; padding:11px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">Add</button>
-                </div>
-            </div>
-
-            <ul id="groceryList"></ul>
-            <button class="clear-all" onclick="clearList()" style="width:100%; border:1px solid var(--danger); color:var(--danger); background:none; padding:10px; border-radius:8px; margin-top:20px; cursor:pointer;">Clear List</button>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-    <script>
-        // CONFIGURATION
-        const firebaseConfig = {
-  apiKey: "AIzaSyDicj2vqrIlEGTX_SHT3YDKBw02CsFpKgI",
-  authDomain: "grocery-listing-2ad38.firebaseapp.com",
-  projectId: "grocery-listing-2ad38",
-  storageBucket: "grocery-listing-2ad38.firebasestorage.app",
-  messagingSenderId: "499057133312",
-  appId: "1:499057133312:web:2cfd3e3dc8c417170795e5"
-};
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let isLoginMode = true;
-
-        // --- AUTH LOGIC ---
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('authTitle').innerText = isLoginMode ? "Login to Grocery" : "Create Account";
-            document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Login" : "Sign Up";
-            document.getElementById('toggleText').innerText = isLoginMode ? "No account? Create one" : "Already have an account? Login";
-        }
-
-        function handleAuth() {
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            
-            if (isLoginMode) {
-                auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-            } else {
-                auth.createUserWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-            }
-        }
-
-        function logout() { auth.signOut(); }
-
-        // --- TRACK AUTH STATE ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('authSection').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                initList();
-            } else {
-                document.getElementById('authSection').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
-            }
-        });
-
-        // --- GROCERY LOGIC ---
-        function addItem() {
-            const name = document.getElementById('itemInput').value;
-            const qty = document.getElementById('qtyInput').value;
-            const unit = document.getElementById('unitInput').value;
-
-            if (name.trim() === "") return;
-
-            db.collection('groceries').add({
-                itemName: name,
-                quantity: qty,
-                unit: unit,
-                userId: auth.currentUser.uid,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById('itemInput').value = "";
-            });
-        }
-
-        function initList() {
-            db.collection('groceries')
-              .orderBy('createdAt', 'desc')
-              .onSnapshot(snapshot => {
-                const listUI = document.getElementById('groceryList');
-                listUI.innerHTML = "";
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <div class="item-details">
-                            <b>${item.itemName}</b>
-                            <span>${item.quantity} <small class="unit-tag">${item.unit}</small></span>
-                        </div>
-                        <button onclick="deleteItem('${doc.id}')" style="background:#e8f5e9; color:#2e7d32; border:none; padding:8px; border-radius:6px; cursor:pointer;">DONE</button>
-                    `;
-                    listUI.appendChild(li);
-                });
-            });
-        }
-
-        function deleteItem(id) { db.collection('groceries').doc(id).delete(); }
-
-        function clearList() {
-            if(confirm("Clear everything?")) {
-                db.collection('groceries').get().then(snap => snap.forEach(d => d.ref.delete()));
-            }
-        }
     </script>
 </body>
 </html>
