@@ -1,9 +1,0 @@
-body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-.container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-h1, h2 { color: #333; text-align: center; }
-.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-button { padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-ul { list-style: none; padding: 0; }
-li { background: #fff; border-bottom: 1px solid #eee; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-.clear-btn { width: 100%; background: #dc3545; margin-top: 20px; } 
