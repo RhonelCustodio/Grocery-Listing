@@ -3,64 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grocery App - Secure</title>
+    <title>My Grocery List</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #28a745; --danger: #dc3545; --bg: #f8f9fa; --text: #333; }
+        :root { --primary: #28a745; --bg: #f8f9fa; --text: #333; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; }
         .app-container { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        
-        /* Auth Styles */
         .hidden { display: none !important; }
-        .auth-box input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .auth-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .switch-auth { text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666; cursor: pointer; }
-
-        /* UI Styles */
-        h1 { text-align: center; font-size: 1.5rem; }
-        .input-card { background: #fff; padding: 15px; border: 1px solid #e1e1e1; border-radius: 12px; margin-bottom: 20px; }
-        .row { display: flex; gap: 8px; align-items: flex-end; margin-top: 10px; }
-        
-        select, input[type="number"], input[type="text"] { 
-            padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; 
-        }
-        
-        .item-details b { display: block; font-size: 1.1rem; }
-        .unit-tag { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #495057; }
-        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .auth-btn, .add-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .row { display: flex; gap: 10px; }
+        ul { list-style: none; padding: 0; margin-top: 20px; }
         li { background: #fff; border-bottom: 1px solid #eee; padding: 15px 5px; display: flex; justify-content: space-between; align-items: center; }
-        .logout-link { text-align: center; display: block; margin-top: 20px; color: #888; text-decoration: none; font-size: 0.8rem; }
+        .item-info b { display: block; font-size: 1.1rem; }
+        .unit-tag { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .done-btn { background: #e8f5e9; color: #2e7d32; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <div id="authSection" class="auth-box">
-            <h1 id="authTitle">Login to Grocery</h1>
-            <input type="email" id="authEmail" placeholder="Email Address">
+        <div id="authSection">
+            <h1 id="authTitle">Login</h1>
+            <input type="email" id="authEmail" placeholder="Email">
             <input type="password" id="authPassword" placeholder="Password">
-            <button class="auth-btn" id="mainAuthBtn" onclick="handleAuth()">Login</button>
-            <p class="switch-auth" onclick="toggleAuthMode()" id="toggleText">No account? Create one</p>
+            <button class="auth-btn" onclick="handleAuth()">Submit</button>
+            <p style="text-align:center; cursor:pointer; font-size:0.9rem; color:#666;" onclick="toggleAuth()">Toggle Signup/Login</p>
         </div>
 
         <div id="mainApp" class="hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h1>My List 🧺</h1>
-                <button onclick="logout()" style="background:none; border:none; color:red; cursor:pointer;">Logout</button>
+                <button onclick="logout()" style="border:none; background:none; color:red; cursor:pointer;">Logout</button>
             </div>
 
             <div class="input-card">
-                <label style="font-size: 0.8rem; color: #666;">Item Name</label>
-                <input type="text" id="itemInput" style="width:100%" placeholder="Ex: Manok, Alcohol...">
-                
+                <input type="text" id="itemName" placeholder="Item Name (e.g. Bread)">
                 <div class="row">
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.8rem;">Qty</label>
-                        <input type="number" id="qtyInput" value="1" min="1" style="width:100%">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.8rem;">Unit</label>
-                        <select id="unitInput" style="width:100%">
+                    <input type="number" id="itemQty" value="1" min="1" style="flex:1">
+                    <select id="itemUnit" style="flex:1">
+                        <option value="pcs">pcs</option>
+                        <option value="kg">kg</option>
+                        <option value="pack">pack</option>
+                        <option value="bottle">bottle</option>
+                    </select>
+                </div>
+                <button class="add-btn" onclick="addItem()">Add to List</button>
+            </div>
+
+            <ul id="groceryList"></ul>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = { /* PASTE YOUR CONFIG HERE */ };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let isLogin = true;
+
+        function toggleAuth() { isLogin = !isLogin; document.getElementById('authTitle').innerText = isLogin ? "Login" : "Sign Up"; }
+        
+        function handleAuth() {
+            const e = document.getElementById('authEmail').value;
+            const p = document.getElementById('authPassword').value;
+            if(isLogin) auth.signInWithEmailAndPassword(e,p).catch(a => alert(a.message));
+            else auth.createUserWithEmailAndPassword(e,p).catch(a => alert(a.message));
+        }
+
+        function logout() { auth.signOut(); }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                loadList();
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        });
+
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const qty = document.getElementById('itemQty').value;
+            const unit = document.getElementById('itemUnit').value;
+            if(!name) return;
+
+            db.collection('groceries').add({
+                itemName: name, quantity: qty, unit: unit,
+                userId: auth.currentUser.uid,
+                userEmail: auth.currentUser.email, // Added for Admin display
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { document.getElementById('itemName').value = ""; });
+        }
+
+        function loadList() {
+            // THE FIX: .where filters the list so user only sees their own items
+            db.collection('groceries')
+              .where('userId', '==', auth.currentUser.uid)
+              .orderBy('createdAt', 'desc')
+              .onSnapshot(snap => {
+                const ui = document.getElementById('groceryList');
+                ui.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    ui.innerHTML += `<li>
+                        <div class="item-info"><b>${d.itemName}</b><span>${d.quantity} <small class="unit-tag">${d.unit}</small></span></div>
+                        <button class="done-btn" onclick="deleteItem('${doc.id}')">DONE</button>
+                    </li>`;
+                });
+            });
+        }
+
+        function deleteItem(id) { db.collection('groceries').doc(id).delete(); }
+    </script>
+</body>
+</html>                        <select id="unitInput" style="width:100%">
                             <option value="pcs">pcs</option>
                             <option value="kg">kg</option>
                             <option value="pack">pack</option>
