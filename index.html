@@ -3,64 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sis's Grocery List</title>
+    <title>Grocery App - Secure</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #28a745;
-            --danger: #dc3545;
-            --bg: #f8f9fa;
-            --text: #333;
+        :root { --primary: #28a745; --danger: #dc3545; --bg: #f8f9fa; --text: #333; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .app-container { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        /* Auth Styles */
+        .hidden { display: none !important; }
+        .auth-box input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .auth-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .switch-auth { text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666; cursor: pointer; }
+
+        /* UI Styles */
+        h1 { text-align: center; font-size: 1.5rem; }
+        .input-card { background: #fff; padding: 15px; border: 1px solid #e1e1e1; border-radius: 12px; margin-bottom: 20px; }
+        .row { display: flex; gap: 8px; align-items: flex-end; margin-top: 10px; }
+        
+        select, input[type="number"], input[type="text"] { 
+            padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; 
+        }
+        
+        .item-details b { display: block; font-size: 1.1rem; }
+        .unit-tag { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #495057; }
+        
+        li { background: #fff; border-bottom: 1px solid #eee; padding: 15px 5px; display: flex; justify-content: space-between; align-items: center; }
+        .logout-link { text-align: center; display: block; margin-top: 20px; color: #888; text-decoration: none; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="authSection" class="auth-box">
+            <h1 id="authTitle">Login to Grocery</h1>
+            <input type="email" id="authEmail" placeholder="Email Address">
+            <input type="password" id="authPassword" placeholder="Password">
+            <button class="auth-btn" id="mainAuthBtn" onclick="handleAuth()">Login</button>
+            <p class="switch-auth" onclick="toggleAuthMode()" id="toggleText">No account? Create one</p>
+        </div>
+
+        <div id="mainApp" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>My List 🧺</h1>
+                <button onclick="logout()" style="background:none; border:none; color:red; cursor:pointer;">Logout</button>
+            </div>
+
+            <div class="input-card">
+                <label style="font-size: 0.8rem; color: #666;">Item Name</label>
+                <input type="text" id="itemInput" style="width:100%" placeholder="Ex: Manok, Alcohol...">
+                
+                <div class="row">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem;">Qty</label>
+                        <input type="number" id="qtyInput" value="1" min="1" style="width:100%">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem;">Unit</label>
+                        <select id="unitInput" style="width:100%">
+                            <option value="pcs">pcs</option>
+                            <option value="kg">kg</option>
+                            <option value="pack">pack</option>
+                            <option value="bottle">bottle</option>
+                        </select>
+                    </div>
+                    <button id="addBtn" onclick="addItem()" style="background:var(--primary); color:white; border:none; padding:11px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">Add</button>
+                </div>
+            </div>
+
+            <ul id="groceryList"></ul>
+            <button class="clear-all" onclick="clearList()" style="width:100%; border:1px solid var(--danger); color:var(--danger); background:none; padding:10px; border-radius:8px; margin-top:20px; cursor:pointer;">Clear List</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // CONFIGURATION
+        const firebaseConfig = {
+  apiKey: "AIzaSyDicj2vqrIlEGTX_SHT3YDKBw02CsFpKgI",
+  authDomain: "grocery-listing-2ad38.firebaseapp.com",
+  projectId: "grocery-listing-2ad38",
+  storageBucket: "grocery-listing-2ad38.firebasestorage.app",
+  messagingSenderId: "499057133312",
+  appId: "1:499057133312:web:2cfd3e3dc8c417170795e5"
+};
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let isLoginMode = true;
+
+        // --- AUTH LOGIC ---
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? "Login to Grocery" : "Create Account";
+            document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Login" : "Sign Up";
+            document.getElementById('toggleText').innerText = isLoginMode ? "No account? Create one" : "Already have an account? Login";
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
+        function handleAuth() {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            
+            if (isLoginMode) {
+                auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
+            } else {
+                auth.createUserWithEmailAndPassword(email, pass).catch(err => alert(err.message));
+            }
         }
 
-        .app-container {
-            background: white;
-            width: 100%;
-            max-width: 450px;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        function logout() { auth.signOut(); }
+
+        // --- TRACK AUTH STATE ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                initList();
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        });
+
+        // --- GROCERY LOGIC ---
+        function addItem() {
+            const name = document.getElementById('itemInput').value;
+            const qty = document.getElementById('qtyInput').value;
+            const unit = document.getElementById('unitInput').value;
+
+            if (name.trim() === "") return;
+
+            db.collection('groceries').add({
+                itemName: name,
+                quantity: qty,
+                unit: unit,
+                userId: auth.currentUser.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById('itemInput').value = "";
+            });
         }
 
-        h1 { text-align: center; margin-bottom: 25px; font-weight: 600; }
-
-        /* Input Section */
-        .input-card {
-            background: #fff;
-            padding: 15px;
-            border: 1px solid #e1e1e1;
-            border-radius: 12px;
-            margin-bottom: 25px;
+        function initList() {
+            db.collection('groceries')
+              .orderBy('createdAt', 'desc')
+              .onSnapshot(snapshot => {
+                const listUI = document.getElementById('groceryList');
+                listUI.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="item-details">
+                            <b>${item.itemName}</b>
+                            <span>${item.quantity} <small class="unit-tag">${item.unit}</small></span>
+                        </div>
+                        <button onclick="deleteItem('${doc.id}')" style="background:#e8f5e9; color:#2e7d32; border:none; padding:8px; border-radius:6px; cursor:pointer;">DONE</button>
+                    `;
+                    listUI.appendChild(li);
+                });
+            });
         }
 
-        .input-group { margin-bottom: 12px; }
+        function deleteItem(id) { db.collection('groceries').doc(id).delete(); }
 
-        label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1rem;
+        function clearList() {
+            if(confirm("Clear everything?")) {
+                db.collection('groceries').get().then(snap => snap.forEach(d => d.ref.delete()));
+            }
         }
-
-        .row { display: flex; gap: 10px; align-items: flex-end; }
-
-        .qty-box { width: 80px; }
-
-        button#addBtn {
+    </script>
+</body>
+    </html>        button#addBtn {
             flex: 1;
             background: var(--primary);
             color: white;
